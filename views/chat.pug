@@ -1,0 +1,80 @@
+// chat.pug
+
+doctype 5
+html
+  head
+    title= 'Chat'
+    link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel="stylesheet", href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css", integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous")
+    // 위 link와 이 script는 부트스트랩 연결
+    script(src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js", integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous")  
+    script(src='/socket.io/socket.io.js')
+    script(src='//code.jquery.com/jquery-1.11.1.js')
+  body
+    center
+      div
+        // 부트스트랩 버튼
+        button.btn.btn-info(type='button') 기카오톡 채팅방  
+      div
+        // 부트스트랩 textarea
+        textarea#chatLog.form-control(readonly='')  
+      form#chat
+        // 부트스트랩 input
+        input#name.form-control(type='text')
+        // 부트스트랩 input
+        input#message.form-control(type='text')
+        // 부트스트랩 버튼
+        button.btn.btn-primary(type='submit') 전송
+      #box.box
+      div#userinfo
+        button.btn.btn-showuser(name='user' type='button') 실시간 접속 인원 확인
+
+    script.
+      var socket = io(); 
+
+      // 전송 버튼을 누를 때 - 1
+      $('#chat').on('submit', function(e){
+      socket.emit('send message', $('#name').val(), $('#message').val());
+      $('#message').val('');
+      $('#message').focus();
+      e.preventDefault();
+      });
+			
+      // 이름 셋팅 - 2
+      socket.on('create name', function(name){
+      $('#name').val(name);
+      });
+
+      // 메세지를 받았을 때 - 3
+      socket.on('receive message', function(msg){
+      $('#chatLog').append(msg+'\n');
+      $('#chatLog').scrollTop($('#chatLog')[0].scrollHeight);
+      });
+	  
+      // 입장했을때 -4
+      socket.on('user login', function(alarm){
+      $('#chatLog').append(alarm+'\n');
+      });
+     
+      // 닉변 할때 - 5
+      socket.on('change name', function(name, nname){
+      $('#chatLog').append(name+' 님이 '+nname+' 으로 닉변했습니다.\n');
+      })
+	  
+      //퇴장 할때 -6
+      socket.on('user logout', function(dicon_name){
+      $('#chatLog').append(dicon_name+'\n');
+      })
+	  
+      //실시간 유저 정보 확인 - 7
+      $("button[name='user']").click(function(e){
+      socket.emit('show user info');
+      });
+      	  
+      socket.on('user info ment', function(){
+      $('#chatLog').append('---실시간 접속 인원---\n');	  
+      })	  
+      	  
+      socket.on('print user', function(name){
+      $('#chatLog').append(name+'\n');
+      });
